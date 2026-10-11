@@ -1,0 +1,102 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: waf-postgres
+    environment:
+      POSTGRES_DB: waf
+      POSTGRES_USER: waf
+      POSTGRES_PASSWORD: waf
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U waf -d waf"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: waf-redis
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: waf-backend
+    environment:
+      DATABASE_URL: postgresql+asyncpg://waf:waf@postgres:5432/waf
+      REDIS_URL: redis://redis:6379/0
+      MODEL_PATH: /app/ml/artifacts/model.pt
+      TOKENIZER_PATH: /app/ml/artifacts/tokenizer
+      WAF_MODE: enforce
+      DEMO_APP_URL: http://demo-app:8001
+      LOG_LEVEL: INFO
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend/app:/app/app
+      - ./ml/artifacts:/app/ml/artifacts:ro
+      - ./demo-app/openapi.yaml:/app/demo-app/openapi.yaml:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/waf/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: waf-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      BACKEND_INTERNAL_URL: http://backend:8000
+      HOSTNAME: "0.0.0.0"
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  demo-app:
+    build:
+      context: ./demo-app
+      dockerfile: Dockerfile
+    container_name: waf-demo-app
+    ports:
+      - "8001:8001"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  default:
+    name: waf-network

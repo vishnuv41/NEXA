@@ -1,0 +1,75 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv
+venv/
+env/
+ENV/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Database
+*.db
+*.sqlite3
+
+# Model artifacts
+ml/artifacts/*.pt
+ml/artifacts/tokenizer/
+
+# Build outputs
+dist/
+build/
+*.egg-info/
+
+# Test coverage
+htmlcov/
+.coverage
+coverage.xml
+
+# Type checking
+.mypy_cache/
+.pytest_cache/
+
+# Frontend & Node
+node_modules/
+.next/
+frontend/.next/
+frontend/node_modules/
+frontend/out/
+frontend/build/
+*.tsbuildinfo
+.opencode/
+
+# Docker
+docker-compose.override.yml
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# IDEA
+*.iml
+
+# Jupyter
+.ipynb_checkpoints/

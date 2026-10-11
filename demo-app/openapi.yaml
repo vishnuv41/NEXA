@@ -1,0 +1,355 @@
+openapi: 3.0.3
+info:
+  title: NEXA Demo Application API
+  version: 1.0.0
+  description: Demo e-commerce application for WAF testing
+servers:
+  - url: http://localhost:8001
+    description: Local development server
+paths:
+  /:
+    get:
+      summary: API root
+      operationId: getRoot
+      responses:
+        '200':
+          description: API information
+          content:
+            application/json:
+              schema:
+                type: object
+  /products:
+    get:
+      summary: List products
+      operationId: listProducts
+      parameters:
+        - name: category
+          in: query
+          description: Filter by category
+          schema:
+            type: string
+            enum: [electronics, accessories]
+      responses:
+        '200':
+          description: Product list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  products:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+                  count:
+                    type: integer
+  /products/{id}:
+    get:
+      summary: Get product by ID
+      operationId: getProduct
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Product details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: Product not found
+  /search:
+    get:
+      summary: Search products
+      operationId: searchProducts
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  query:
+                    type: string
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+                  count:
+                    type: integer
+  /login:
+    post:
+      summary: User login
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+  /dashboard:
+    get:
+      summary: User dashboard
+      operationId: getDashboard
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardResponse'
+        '401':
+          description: Authentication required
+  /users/{id}:
+    get:
+      summary: Get user by ID
+      operationId: getUser
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Authentication required
+        '404':
+          description: User not found
+  /cart:
+    post:
+      summary: Add item to cart
+      operationId: addToCart
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartRequest'
+      responses:
+        '200':
+          description: Item added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  cart:
+                    type: array
+        '401':
+          description: Authentication required
+        '404':
+          description: Product not found
+  /checkout:
+    post:
+      summary: Checkout cart
+      operationId: checkout
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '400':
+          description: Cart empty
+        '401':
+          description: Authentication required
+  /payment:
+    post:
+      summary: Process payment
+      operationId: processPayment
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        '200':
+          description: Payment processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '401':
+          description: Authentication required
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        price:
+          type: number
+          format: float
+        category:
+          type: string
+      required: [id, name, price, category]
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+        password:
+          type: string
+          minLength: 8
+          maxLength: 100
+      required: [username, password]
+    LoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        token:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        role:
+          type: string
+          enum: [admin, user]
+      required: [id, username, role]
+    DashboardResponse:
+      type: object
+      properties:
+        user_id:
+          type: integer
+        stats:
+          type: object
+          properties:
+            orders:
+              type: integer
+            total_spent:
+              type: number
+            wishlist_items:
+              type: integer
+        recent_activity:
+          type: array
+    CartRequest:
+      type: object
+      properties:
+        product_id:
+          type: integer
+          minimum: 1
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 1
+      required: [product_id]
+    OrderResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        order:
+          type: object
+          properties:
+            id:
+              type: integer
+            user_id:
+              type: integer
+            items:
+              type: array
+            total:
+              type: number
+            status:
+              type: string
+    PaymentRequest:
+      type: object
+      properties:
+        order_id:
+          type: integer
+        payment_method:
+          type: string
+          enum: [card, paypal, apple_pay]
+          default: card
+        amount:
+          type: number
+      required: [order_id]
+    PaymentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        transaction_id:
+          type: string
+        order_id:
+          type: integer
+        amount:
+          type: number
+        method:
+          type: string
+        status:
+          type: string
+  x-sensitivity:
+    /payment:
+      post: critical
+    /checkout:
+      post: high
+    /dashboard:
+      get: medium
+    /users/{id}:
+      get: medium
+    /cart:
+      post: medium
+    /login:
+      post: high
